@@ -316,7 +316,7 @@ df4.head(10)
 ```
 ### Hint:
 After running the updates, we can reset the database by running: $ mongoimport --type json -d uk_food -c establishments --drop --jsonArray establishments.json in a new terminal.
-To avoid error messages and confusing we can add a test for each update:
+To avoid error messages and confusion, we can add a test for each update:
 
 1- Insert
 ```
