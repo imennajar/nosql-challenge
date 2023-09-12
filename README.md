@@ -314,4 +314,6 @@ print('Number of establishment  in the dataframe: ', len(df))
 df4.head(10)
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ```
+### Hint:
+After running the updates, we can reset the database by running: $ mongoimport --type json -d uk_food -c establishments --drop --jsonArray establishments.json in a new terminal.
 ##### Supports: Slack AskBCS Learning Assistant
