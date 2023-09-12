@@ -316,4 +316,43 @@ df4.head(10)
 ```
 ### Hint:
 After running the updates, we can reset the database by running: $ mongoimport --type json -d uk_food -c establishments --drop --jsonArray establishments.json in a new terminal.
+To avoid error messages and confusing we can add a test for each update:
+1- Insert
+```
+# Insert the new restaurant into the collection
+# Test if the restaurant is already inserted in a previous run
+exist = establishments.find_one({'BusinessName': 'Penang Flavours'})
+if not exist:
+    establishments.insert_one(new_res)
+    print("Insert successful")
+else:
+    print('Insert already done')
+```
+2- Update
+```
+# Update the new restaurant with the correct BusinessTypeID
+query1 = {"BusinessName": "Penang Flavours"}
+
+query2 = {"$set": {"BusinessTypeID": 1}}
+
+res = establishments.update_one(query1,query2)
+# Test if the restaurant is already updated in a previous run
+if res.modified_count > 0:
+    print('Update successful')
+else:
+    print('Update already done')
+```
+3- Delete
+```
+# Delete all documents where LocalAuthorityName is "Dover"
+query = {"LocalAuthorityName": "Dover"}
+
+res=establishments.delete_many(query)
+# Test if the documents are already deleted in a previous run
+if res.deleted_count > 0:
+    print('delete successful')
+else:
+    print('Delete already done')
+```
+
 ##### Supports: Slack AskBCS Learning Assistant
