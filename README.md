@@ -14,7 +14,7 @@ We will work on three parts:
 
 ## What we will learn from this project:
 
-- How to import data provided in json file, create an instance of the Mongo Client and  loaded data properly
+- How to import data provided in json file, create an instance of the Mongo Client and load data properly
   
 - How to insert, update, delete, retrieve and display information from the database
 
@@ -25,17 +25,17 @@ Part1:
 
 - Import the data provided in the establishments.json file from the Terminal: $ mongoimport --type json -d uk_food -c establishments --drop --jsonArray establishments.json
 
-- List the databases in MongoDB. Confirm that the new created one is listed, list the collection in the database (we have one collection called establishment), and find and display one document.
+- List the databases in MongoDB. Confirm that the new created one is listed, list the collection in the database (we have one collection called establishment), and find and display one document
 
 Part2:
 
 -  Add a new establishment
   
--  Update the new establishment to be coherent with the rest of the establishments in the database
+-  Update the new establishment to be consistent with the rest of the establishments in the database
   
--  Delete unusuful information
+-  Delete unnecessary infonmation
 
-- Convert some fields type
+- Convert some field types
 
 Part 3:
 
@@ -64,6 +64,7 @@ Part 3:
 # Import dependencies
 from pymongo import MongoClient
 from pprint import pprint
+import pandas as pd
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Create an instance of MongoClient
 mongo = MongoClient(port=27017)
@@ -84,7 +85,7 @@ establishments = db['establishments']
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ```
 
-#### Part2 : Database and Jupyter Notebook Set Up
+#### Part2: Update the Database
 
 ##### Insert and retrieve data
 
@@ -130,8 +131,9 @@ establishments.find_one(query)
 # Find the BusinessTypeID for "Restaurant/Cafe/Canteen" and return only the BusinessTypeID and BusinessType fields
 query = {"BusinessType": "Restaurant/Cafe/Canteen"}
 result = establishments.find(query,{"_id": 0,"BusinessTypeID":1, "BusinessType":1} )
-for i in result:
-    print(i)
+# for i in result:
+#     print(i)
+result[0]
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Find the BusinessTypeID for "Restaurant/Cafe/Canteen" and return only the BusinessTypeID and BusinessType fields
 query = {"BusinessType": "Restaurant/Cafe/Canteen"}
@@ -178,11 +180,11 @@ print('The number of Dover Local Authority after deleting is ', nbr)
 pprint(establishments.find_one())
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ```
-##### Update structure and retrieve data
+##### Update structure (types) and retrieve data
 ```
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Change the data type from String to Decimal for longitude and latitude
-query={'$set':{ "geocode.longitude" : {'$toDecimal': "$geocode.longitude"}, "geocode.latitude" : {'$toDecimal': "$geocode.latitude"} }}
+query={'$set':{ "geocode.longitude" : {'$toDouble': "$geocode.longitude"}, "geocode.latitude" : {'$toDouble': "$geocode.latitude"} }}
 establishments.update_many({},[query])
 pprint(establishments.find_one())
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -196,23 +198,120 @@ doc=establishments.find_one()
 r=type(doc.get('RatingValue'))
 la=type(doc.get('geocode').get('latitude'))
 lo=type(doc.get('geocode').get('longitude'))
-print('The type of RatingValue is ', r)
-print('The type of Latitude is ', la)
-print('The type of Longitude is ', lo)
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+print('the type of RatingValue is ', r)
+print('the type of Latitude is ', la)
+print('the type of Longitude is ', lo)
+[doc for doc in establishments.find({}, ['geocode.longitude', 'geocode.latitude','RatingValue'])]
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ```
-### Hint:
-In order of verification and using the learned tools, I used MS Excel to verify with a sample from hawaii_measurements table.
+### Part 3: Exploratory Analysis
 
-Results of the Min Max and Average of the temperature between start date: 2010-02-08 and end date: 2010-02-09
-<img src='start-end-flask.png' style ='width:700px;height:300px'/>  <img src='start-end-excel.png' style ='width:700px;height:300px'/>
+```
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Find the establishments with a hygiene score of 20
+query = {"scores.Hygiene": 20}
 
+# Use count_documents to display the number of documents in the result
+x = establishments.count_documents(query)
+print('The number of establishment with a hygiene score of 20 is: ', x)
 
+# Display the first document in the results using pprint
+res = establishments.find(query)
+pprint(res[0])
 
-Results of the Min Max and Average of the temperature from start date: 2017-08-01 to last date: 2017-08-23
+# Convert the result to a Pandas DataFrame
+hygien_score20_df = establishments.find(query)
+df1= pd.DataFrame(hygien_score20_df)
 
-<img src='start-flask.png' style ='width:700px;height:300px'/>  <img src='start-excel.png' style ='width:700px;height:300px'/>
+# Display the number of rows in the DataFrame
+print("The number of establishments with a hygiene score of 20: ", len(df1))
 
-##### Supports: Slack AskBCS Learning Assistant/Tutoring support
+# Display the first 10 rows of the DataFrame
+df1.head(10)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Find the establishments with London as the Local Authority and has a RatingValue greater than or equal to 4.
+query = {'LocalAuthorityName': {'$regex':'London'},'RatingValue': {'$gte': 4} }
+
+# Use count_documents to display the number of documents in the result
+x = establishments.count_documents(query)
+
+# Display the first document in the results using pprint
+res = establishments.find(query)
+print('The number of establishment with London as the Local Authority and has a RatingValue greater than or equal to 4 is ',x)
+pprint(res[0])
+
+# Convert the result to a Pandas DataFrame
+london_Rate_g4_df  = establishments.find(query)
+df2= pd.DataFrame(london_Rate_g4_df)
+
+# Display the number of rows in the DataFrame
+
+print('The number of establishment with London as the Local Authority and has a RatingValue greater than or equal to 4 in the dataframe is ',len(df2))
+# Display the first 10 rows of the DataFrame
+df2.head(10)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Find the establishments with London as the Local Authority and has a RatingValue greater than or equal to 4.
+query = {'LocalAuthorityName': {'$regex':'London'},'RatingValue': {'$gte': 4} }
+
+# Use count_documents to display the number of documents in the result
+x = establishments.count_documents(query)
+
+# Display the first document in the results using pprint
+res = establishments.find(query)
+print(x)
+pprint(res[0])
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Search within 0.01 degree on either side of the latitude and longitude.
+# Rating value must equal 5
+# Sort by hygiene score
+
+degree_search = 0.01
+# Search within 0.01 degree on either side of the latitude and longitude.
+# Rating value must equal 5
+# Sort by hygiene score
+degree_search = 0.01
+la= 51.49014200
+lo= 0.08384000
+
+query = {'geocode.latitude': {'$gte': la - degree_search, '$lte': la + degree_search},
+        'geocode.longitude': {'$gte': lo - degree_search, '$lte': lo + degree_search},
+        'RatingValue':5 }
+
+sort=[('scores.Hygiene',1)]
+
+# Print the results
+results = establishments.find(query).sort(sort).limit(5)
+pprint(list(results))
+
+# Convert result to Pandas DataFrame
+df3 = pd.DataFrame(establishments.find(query).sort(sort).limit(5))
+df3
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Create a pipeline that: 
+# 1. Matches establishments with a hygiene score of 0
+match_query = {'$match': {'scores.Hygiene': 0}}
+
+# 2. Groups the matches by Local Authorityz
+group_query = {'$group': {'_id': "$LocalAuthorityName", 'count': { '$sum': 1 }}}
+
+# 3. Sorts the matches from highest to lowest
+sort_values = {'$sort': { 'count': -1 }}
+
+# Print the number of documents in the result
+pipeline = [match_query, group_query, sort_values]
+results = list(establishments.aggregate(pipeline))
+print("Number of establishment  in result: ", len(results))
+
+# Print the first 10 results
+pprint(results[0:10])
+
+# Convert the result to a Pandas DataFrame
+df4= pd.DataFrame(results)
+# Display the number of rows in the DataFrame
+print('Number of establishment  in the dataframe: ', len(df))
+
+# Display the first 10 rows of the DataFrame
+df4.head(10)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+```
+##### Supports: Slack AskBCS Learning Assistant
